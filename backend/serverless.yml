@@ -24,8 +24,9 @@ provider:
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
-    TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    ATTACHMENT_S3_BUCKET: sls-todo-app-images-buez-${self:provider.stage}
+    TODOS_CREATED_AT_INDEX: CreatedAtIndex-${self:provider.stage}
+    TODOS_DUE_DATE_INDEX: DueDateIndex-${self:provider.stage}
+    ATTACHMENT_S3_BUCKET: sls-todo-app-attachments-bucket-1-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     # AUTH0_SECRET: 0bzAqf40jHUghhwXKn603dwNs7N4mkyZ4AA9aSnpmqkDGTby8oOoGTPPiRHYtpZU
 
@@ -47,11 +48,13 @@ functions:
 
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
+    tracing: 'true'
 
   # TODO: Configure this function - 
   # Provide iamRoleStatements property for performing Actions on DynamoDB
   GetTodos:
     handler: src/lambda/http/getTodos.handler
+    tracing: 'true'
     events:
       - http:
           method: get
@@ -74,6 +77,7 @@ functions:
   # To validate incoming HTTP requests, we have provided the request schemas in function definition below. 
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
+    tracing: 'true'
     events:
       - http:
           method: post
@@ -93,6 +97,7 @@ functions:
   # Provide property for setting up CORS, Authorizer, iamRoleStatements, and request schemas
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
+    tracing: 'true'
     events:
       - http:
           method: patch
@@ -112,6 +117,7 @@ functions:
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
+    tracing: 'true'
     events:
       - http:
           method: delete
@@ -134,6 +140,7 @@ functions:
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
+    tracing: 'true'
     events:
       - http:
           method: post
@@ -179,6 +186,8 @@ resources:
             AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
+          - AttributeName: dueDate
+            AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
@@ -190,6 +199,14 @@ resources:
               - AttributeName: userId
                 KeyType: HASH
               - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.TODOS_DUE_DATE_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: dueDate
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL

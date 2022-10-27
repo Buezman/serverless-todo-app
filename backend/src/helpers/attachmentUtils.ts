@@ -7,7 +7,7 @@ const XAWS = AWSXRay.captureAWS(AWS)
 export class AttachmentUtils {
     constructor (
         private readonly s3 = new XAWS.S3({signatureVersion: 'v4'}),
-        private readonly docClient = new AWS.DynamoDB.DocumentClient(),
+        private readonly docClient = new XAWS.DynamoDB.DocumentClient(),
         private readonly s3Bucket = process.env.ATTACHMENT_S3_BUCKET,
         private readonly todosTable = process.env.TODOS_TABLE,
         private readonly urlExpiration = process.env.SIGNED_URL_EXPIRATION){

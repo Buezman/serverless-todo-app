@@ -1,18 +1,20 @@
 import * as AWS from 'aws-sdk'
-// import * as AWSXRay from 'aws-xray-sdk'
+import * as AWSXRay from 'aws-xray-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { createLogger } from '../utils/logger'
 import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate';
 
-// const XAWS = AWSXRay.captureAWS(AWS)
+const XAWS = AWSXRay.captureAWS(AWS)
 
 const logger = createLogger('TodosAccess')
 
 // TODO: Implement the dataLayer logic
 export class TodosAccess {
     constructor (
-        private readonly docClient: DocumentClient = new AWS.DynamoDB.DocumentClient(),
+        private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
+        private readonly createdAtIndex = process.env.TODOS_CREATED_AT_INDEX,
+        private readonly dueDateIndex = process.env.TODOS_DUE_DATE_INDEX,
         private readonly todosTable = process.env.TODOS_TABLE) {
     }
 
@@ -26,19 +28,22 @@ export class TodosAccess {
         return todo;
     }
 
-    async getUserTodos(userId:string): Promise<TodoItem[]> {
+    async getUserTodos(userId:string, limit: number, nextKey: any, sort?: string) {
         logger.info(`Getting all todos for user with id: ${userId}`)
         const result = await this.docClient.query({
             TableName: this.todosTable,
             KeyConditionExpression: 'userId = :userId',
+            IndexName: sort == 'dueDate' ? this.dueDateIndex : this.createdAtIndex,
             ExpressionAttributeValues: {
             ':userId': userId
             },
-            ScanIndexForward: false
+            ScanIndexForward: sort == 'dueDate' ? true : false,
+            Limit: limit,
+            ExclusiveStartKey: nextKey
         }).promise()
 
-        const userTodos = result.Items
-        return userTodos as TodoItem[]
+        // const userTodos = result.Items
+        return result
     }
 
     async updateTodo(updateRequest: TodoUpdate, todoId:string, userId:string) {
