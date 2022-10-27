@@ -4,6 +4,8 @@ To implement this project, you need to implement a simple TODO application using
 
 ## Github repo: [click here](https://github.com/Buezman/serverless-todo-app.git)
 
+### Backend base-endpoint: https://bzbx2utuh2.execute-api.us-east-1.amazonaws.com/dev/
+
 # Functionality of the application
 
 This application will allow creating/removing/updating/fetching TODO items. Each TODO item can optionally have an attachment image. Each user only has access to TODO items that he/she has created.
