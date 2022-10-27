@@ -48,6 +48,19 @@ export class TodosAccess {
 
     async updateTodo(updateRequest: TodoUpdate, todoId:string, userId:string) {
         logger.info(`Updating todo with id: ${todoId}`)
+        const isValidTodo = await this.todoExists(todoId, userId)
+        if (!isValidTodo) {
+            return {
+              statusCode: 404,
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': true
+              },
+              body: JSON.stringify({
+                error: 'Todo does not exist'
+              })
+            }
+        }
         await this.docClient.update({
             TableName: this.todosTable,
             Key: {
@@ -68,7 +81,8 @@ export class TodosAccess {
 
     async deleteTodo(todoId:string, userId:string) {
         logger.info(`Deleting todo with id: ${todoId}`)
-        await this.docClient.delete({
+
+        return await this.docClient.delete({
             TableName: this.todosTable,
             Key: {
                 todoId,
@@ -77,4 +91,16 @@ export class TodosAccess {
         }).promise()
     }
 
+    async todoExists(todoId: string, userId:string) {
+        const result = await this.docClient.get({
+            TableName: this.todosTable,
+            Key: {
+                todoId,
+                userId
+            }
+        }).promise()
+        logger.info('Get todoId', result)
+        return !!result.Item
+    }
 }
+

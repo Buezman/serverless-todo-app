@@ -1,5 +1,5 @@
-import { TodosAccess } from './todosAcess'
-import { AttachmentUtils } from './attachmentUtils';
+import { TodosAccess } from '../datalayer/todosAccess'
+import { AttachmentUtils } from '../fileStorage/attachmentUtils';
 import { TodoItem } from '../models/TodoItem'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
@@ -36,6 +36,19 @@ export async function createTodo(request: CreateTodoRequest, userId: string) : P
 
 export async function updateTodo(request:UpdateTodoRequest, todoId:string, userId: string) {
     logger.info('Updating todo with id: ',todoId)
+    const isValidTodo = await todosAccess.todoExists(todoId, userId)
+    if (!isValidTodo) {
+        return {
+            statusCode: 404,
+            headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': true
+            },
+            body: JSON.stringify({
+            error: 'Todo does not exist'
+            })
+        }
+    }
     try {
         return await todosAccess.updateTodo(request, todoId, userId)
     } catch(e) {
@@ -45,11 +58,24 @@ export async function updateTodo(request:UpdateTodoRequest, todoId:string, userI
 
 export async function deleteTodo(todoId: string, userId: string) {
     logger.info('Deleting todo with id: ',todoId)
+    const isValidTodo = await todosAccess.todoExists(todoId, userId)
+    if (!isValidTodo) {
+        return {
+            statusCode: 404,
+            headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': true
+            },
+            body: JSON.stringify({
+            error: 'Todo does not exist'
+            })
+        }
+    }
     try {
         await attachmentUtils.deleteTodoImage(todoId)
         return await todosAccess.deleteTodo(todoId, userId)    
     } catch(e) {
-        createError(e.message)
+        logger.error(e.message)
     }
 }
 

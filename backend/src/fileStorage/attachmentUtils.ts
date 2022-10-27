@@ -14,7 +14,7 @@ export class AttachmentUtils {
     }
 
     async deleteTodoImage(todoId: string){
-        this.s3.deleteObject({
+        return this.s3.deleteObject({
             Bucket: this.s3Bucket,
             Key: todoId
         });
